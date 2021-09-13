@@ -2,6 +2,9 @@
 
 ## Pasiruosimas
 
+1)npm mysql2
+2)npm init -y
+
 Sukurti duombaze pavadinimu "social".
 
 Importuoti duotas lenteles, tokiu eiliskumu:
