@@ -31,16 +31,16 @@ app.init = async () => {
     //1. Registruotu vartotoju sarasas, isrikiuotas nuo naujausio link 
     //seniausio. Reikia nurodyti varda, post'u kieki, komentaru kieki ir like'u kieki
     sql = 'SELECT `users`.`id`, `firstname`, \
-    COUNT(DISTINCT `posts`.`id`) as posts, COUNT(DISTINCT `comments`.`id`) as comments, COUNT(DISTINCT `posts_likes`.`id`) as likes\
-    FROM `users`\
-    LEFT JOIN `posts`\
-    ON `posts`.`user_id` = `users`.`id`\
-    LEFT JOIN `comments`\
-    ON `comments`.`user_id` = `users`.`id`\
-    LEFT JOIN `posts_likes`\
-    ON `posts_likes`.`user_id` = `users`.`id`\
-    GROUP BY `users`.`id`\
-    ORDER BY `register_date` DESC';
+            COUNT(DISTINCT `posts`.`id`) as posts, COUNT(DISTINCT `comments`.`id`) as comments, COUNT(DISTINCT `posts_likes`.`id`) as likes\
+            FROM `users`\
+            LEFT JOIN `posts`\
+                ON `posts`.`user_id` = `users`.`id`\
+            LEFT JOIN `comments`\
+                ON `comments`.`user_id` = `users`.`id`\
+            LEFT JOIN `posts_likes`\
+                ON `posts_likes`.`user_id` = `users`.`id`\
+            GROUP BY `users`.`id`\
+            ORDER BY `register_date` DESC';
     [rows] = await connection.execute(sql);
 
     console.log(`Users: `);
@@ -50,13 +50,13 @@ app.init = async () => {
 
     //2. Isspausdinti, koki turini turetu matyti Ona (antrasis vartotojas). Irasus pateikti nuo naujausio_
     sql = 'SELECT `users`.`firstname`, `posts`.`text`, `posts`.`date` \
-        FROM `posts` \
-        LEFT JOIN `users` \
-            ON `users`.`id` = `posts`.`user_id` \
-        LEFT JOIN `friends` \
-            ON `friends`.`friend_id` = `posts`.`user_id` \
-        WHERE `friends`.`user_id` = 2\
-        ORDER BY `posts`.`date` DESC';
+            FROM `posts` \
+            LEFT JOIN `users` \
+                ON `users`.`id` = `posts`.`user_id` \
+            LEFT JOIN `friends` \
+                ON `friends`.`friend_id` = `posts`.`user_id` \
+            WHERE `friends`.`user_id` = 2\
+            ORDER BY `posts`.`date` DESC';
     [rows] = await connection.execute(sql);
     console.log("Onas's feed:");
     for (let { firstname, text, date } of rows) {
@@ -68,26 +68,37 @@ app.init = async () => {
 
     //4. Isspausdinti, kas kokius draugus stebi (visi vartotojai)
     sql = 'SELECT `user_id`, `friend_id`, `follow_date` as date,\
-      (SELECT `users`.`firstname`\
-        FROM `users`\
-        WHERE `users`.`id` = `friends`.`friend_id`) as friend,\
-          (SELECT `users`.`firstname`\
+            (SELECT `users`.`firstname`\
+            FROM `users`\
+            WHERE `users`.`id` = `friends`.`friend_id`) as friend,\
+            (SELECT `users`.`firstname`\
             FROM `users`\
             WHERE `users`.`id` = `friends`.`user_id`) as user\
             FROM `friends`';
 
     [rows] = await connection.execute(sql);
-    console.log(rows);
     console.log("User's relationships:");
     for (let { friend, user, date } of rows) {
         console.log(`${++i} ${upperName(user)} is following ${upperName(friend)} (since ${formatDate(date)});`);
     }
+    console.log('');
 
     //5. Koks yra like'u naudojamumas. Isrikiuoti nuo labiausiai naudojamo
+    sql = 'SELECT `like_options`.`id`, `like_options`.`text`,\
+                    `posts_likes`.`like_option_id`, \
+                    COUNT(`posts_likes`.`like_option_id`) as panaudota\
+            FROM `like_options`\
+            LEFT JOIN `posts_likes`\
+                ON `posts_likes`.`like_option_id` = `like_options`.`id`\
+            GROUP BY `like_options`.`id`\
+            ORDER BY `panaudota` DESC';
+    [rows] = await connection.execute(sql);
 
-
-
-
+    console.log(rows);
+    console.log('Like options statistics:');
+    for (const { text, panaudota } of rows) {
+        console.log(`1. ${text} - ${panaudota} time;`);
+    }
 }
 
 app.init();
