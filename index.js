@@ -94,11 +94,31 @@ app.init = async () => {
             ORDER BY `panaudota` DESC';
     [rows] = await connection.execute(sql);
 
-    console.log(rows);
     console.log('Like options statistics:');
     for (const { text, panaudota } of rows) {
         console.log(`1. ${text} - ${panaudota} time;`);
     }
+
+    //6. Isspausdinti visus komentarus, kuriuose yra nurodytas paieskos tekstas. Jei nieko nerasta, tai parodyti atitinkama pranesima. Visa tai turi buti funkcijos pavydale, kuri gauna vieninteli parametra - paieskos fraze
+    async function searchBox(str) {
+        sql = sql = 'SELECT * FROM `comments` WHERE `text` LIKE "%' + str + '%"';
+        [rows] = await connection.execute(sql);
+        if (rows.length === 0) { //tikrinam ar array tuscias
+            console.error(`ERROR:Tokio komentaro nera`);
+        } else {
+            console.log(`Comments with search term "${str}":`);
+            count = 0;
+            for (let { text, date } of rows) {
+                console.log(`${++count}. "${text}" (${formatDate(date)});`);
+            }
+        }
+
+    }
+
+    await searchBox('nice');
+    await searchBox('x');
+
+
 }
 
 app.init();
